@@ -1,0 +1,171 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                   ELEMENTOR CONCIERGE ADDONS PLUGIN                        ║
+║                          Installation & Setup                              ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+📦 WHAT'S INCLUDED
+──────────────────────────────────────────────────────────────────────────────
+
+This plugin provides custom Elementor widgets for tour pages:
+
+  ✓ Sidebar Nav Title    - A title header for your sidebar navigation
+  ✓ Sidebar Nav          - Interactive section navigation with scroll-spy
+  ✓ Ready for future widgets (plugin structure supports multiple addons)
+
+
+🚀 INSTALLATION STEPS
+──────────────────────────────────────────────────────────────────────────────
+
+1. UPLOAD THE PLUGIN
+   - Copy entire "elementor-concierge-addons" folder to:
+     /wp-content/plugins/
+   
+   Final path should be:
+     /wp-content/plugins/elementor-concierge-addons/
+                          elementor-concierge-addons.php
+
+2. ACTIVATE IN WORDPRESS
+   - Go to WordPress Dashboard → Plugins
+   - Find "Elementor Concierge Addons"
+   - Click "Activate"
+
+3. VERIFY IT WORKS
+   - Edit any page with Elementor
+   - Left sidebar → Look for "Concierge Golf" category
+   - You should see 2 widgets:
+     • Sidebar Nav Title
+     • Sidebar Nav
+
+4. YOU'RE READY!
+   - Drag widgets to your page
+   - Configure in the right panel
+   - See README.md for detailed usage
+
+
+📋 REQUIREMENTS
+──────────────────────────────────────────────────────────────────────────────
+
+  • WordPress 5.0 or higher
+  • Elementor 3.0 or higher
+  • PHP 7.4 or higher
+  • jQuery (included in WordPress)
+
+
+📚 DOCUMENTATION
+──────────────────────────────────────────────────────────────────────────────
+
+In the plugin folder, you'll find:
+
+  README.md           - Full user guide with all features explained
+  QUICK-REFERENCE.md  - Setup examples and color themes
+  DEVELOPMENT.md      - For developers adding new widgets
+  INSTALLATION.txt    - This file
+
+
+⚙️ BASIC CONFIGURATION
+──────────────────────────────────────────────────────────────────────────────
+
+SIDEBAR NAV TITLE
+  • Add widget to page
+  • Set title text (e.g., "On this page")
+  • Choose background color (default: Navy #1d3461)
+  • Customize font & padding
+
+SIDEBAR NAV
+  • Add widget to page
+  • Add navigation items (Label + Section ID)
+    Example: Label="Trip Highlights", Link="#highlights"
+  • Enable "Scroll Spy" for auto-highlighting
+  • Customize colors and spacing
+
+IMPORTANT: Your page sections must have matching IDs:
+  <section id="highlights">...</section>
+  <section id="itinerary">...</section>
+  etc.
+
+
+🎨 QUICK STYLING DEFAULTS
+──────────────────────────────────────────────────────────────────────────────
+
+Navy Blue:        #1d3461
+Gold Accent:      #c4973a
+Cream Background: #f7f5f0
+Light Border:     #dde3ec
+Muted Text:       #6b7a8d
+
+All customizable in Elementor widget settings!
+
+
+🆘 COMMON ISSUES
+──────────────────────────────────────────────────────────────────────────────
+
+Q: Plugin doesn't appear in WordPress?
+A: Make sure Elementor is installed and activated first.
+   Then install this plugin.
+
+Q: Widgets don't show in Elementor?
+A: Clear Elementor cache: Elementor → Tools → Regenerate CSS
+
+Q: Scroll spy not working?
+A: Check section IDs match navigation links (case-sensitive)
+   Add data-scroll-offset="150" (increase if header is tall)
+
+Q: Colors not applying?
+A: Clear browser cache
+   Check that valid color codes are used (#hex or rgb)
+
+For more help, see README.md or DEVELOPMENT.md
+
+
+🔧 FILE STRUCTURE
+──────────────────────────────────────────────────────────────────────────────
+
+elementor-concierge-addons/
+├── elementor-concierge-addons.php      Main plugin file
+├── README.md                            Full documentation
+├── QUICK-REFERENCE.md                   Setup examples
+├── DEVELOPMENT.md                       Developer guide
+├── INSTALLATION.txt                     This file
+│
+├── includes/
+│   ├── class-elementor-addons.php       Plugin class & registration
+│   └── widgets/
+│       ├── sidebar-nav-title.php        Title widget
+│       └── sidebar-nav.php              Nav widget
+│
+└── assets/
+    ├── css/
+    │   └── elementor-addons.css         Styles
+    └── js/
+        └── elementor-addons.js          Scroll spy & interactions
+
+
+🚀 NEXT STEPS
+──────────────────────────────────────────────────────────────────────────────
+
+1. Read README.md for complete feature overview
+2. Check QUICK-REFERENCE.md for setup examples
+3. Drag widgets into your Elementor pages
+4. Configure colors and spacing to match your design
+5. Ready to add more widgets? See DEVELOPMENT.md
+
+
+📞 SUPPORT
+──────────────────────────────────────────────────────────────────────────────
+
+This is a custom plugin built for Concierge Golf Scotland.
+For customizations or adding new widgets, refer to DEVELOPMENT.md.
+
+
+✨ THANK YOU!
+──────────────────────────────────────────────────────────────────────────────
+
+Your Elementor Concierge Addons plugin is ready to use!
+
+Questions? Check the documentation files included in this folder.
+
+Version: 1.0.0
+Built: 2026
+For: Concierge Golf Scotland
+
+════════════════════════════════════════════════════════════════════════════
