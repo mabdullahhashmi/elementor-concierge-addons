@@ -425,7 +425,7 @@ class Elementor_Tour_Toggle extends \Elementor\Widget_Base {
 			\Elementor\Group_Control_Typography::get_type(),
 			[
 				'name'     => 'day_typography',
-				'selector' => '{{WRAPPER}} .cga-toggle-day',
+				'selector' => '{{WRAPPER}} .cga-toggle-day-label',
 			]
 		);
 
@@ -436,7 +436,19 @@ class Elementor_Tour_Toggle extends \Elementor\Widget_Base {
 				'type'      => \Elementor\Controls_Manager::COLOR,
 				'default'   => '#1d3461',
 				'selectors' => [
-					'{{WRAPPER}} .cga-toggle-day' => 'color: {{VALUE}};',
+					'{{WRAPPER}} .cga-toggle-day-label' => 'color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_control(
+			'day_number_color',
+			[
+				'label'     => esc_html__( 'Day Number Color', 'elementor-concierge-addons' ),
+				'type'      => \Elementor\Controls_Manager::COLOR,
+				'default'   => '#ffffff',
+				'selectors' => [
+					'{{WRAPPER}} .cga-toggle-day-num' => 'color: {{VALUE}};',
 				],
 			]
 		);
@@ -785,11 +797,30 @@ class Elementor_Tour_Toggle extends \Elementor\Widget_Base {
 		<div class="cga-tour-toggles" data-single-open="<?php echo esc_attr( $single_open ); ?>" data-open-first="<?php echo esc_attr( $open_first ); ?>" data-speed="<?php echo esc_attr( $animation_speed ); ?>">
 			<?php foreach ( $items as $index => $item ) : ?>
 				<?php $is_open = ( 0 === $index && 'yes' === $open_first ); ?>
+				<?php
+				$day_text = isset( $item['day_text'] ) ? trim( wp_strip_all_tags( $item['day_text'] ) ) : '';
+				$day_num  = '';
+				$day_lbl  = $day_text;
+
+				if ( preg_match( '/(\d+)/', $day_text, $matches ) ) {
+					$day_num = $matches[1];
+					$day_lbl = trim( preg_replace( '/\d+/', '', $day_text ) );
+				}
+
+				if ( '' === $day_lbl ) {
+					$day_lbl = esc_html__( 'Day', 'elementor-concierge-addons' );
+				}
+				?>
 				<div class="cga-toggle-item<?php echo $is_open ? ' is-open' : ''; ?>">
 					<button class="cga-toggle-trigger" type="button" aria-expanded="<?php echo $is_open ? 'true' : 'false'; ?>">
 						<span class="cga-toggle-header-left">
 							<?php if ( ! empty( $item['day_text'] ) ) : ?>
-								<span class="cga-toggle-day"><?php echo esc_html( $item['day_text'] ); ?></span>
+								<span class="cga-toggle-day">
+									<?php if ( '' !== $day_num ) : ?>
+										<span class="cga-toggle-day-num"><?php echo esc_html( $day_num ); ?></span>
+									<?php endif; ?>
+									<span class="cga-toggle-day-label"><?php echo esc_html( strtoupper( $day_lbl ) ); ?></span>
+								</span>
 							<?php endif; ?>
 							<span class="cga-toggle-title"><?php echo esc_html( $item['title_text'] ); ?></span>
 						</span>
@@ -825,7 +856,10 @@ class Elementor_Tour_Toggle extends \Elementor\Widget_Base {
 				<button class="cga-toggle-trigger" type="button" aria-expanded="{{{ opened ? 'true' : 'false' }}}">
 					<span class="cga-toggle-header-left">
 						<# if ( item.day_text ) { #>
-							<span class="cga-toggle-day">{{{ item.day_text }}}</span>
+							<span class="cga-toggle-day">
+								<span class="cga-toggle-day-num">{{{ (item.day_text.match(/\d+/) || [''])[0] }}}</span>
+								<span class="cga-toggle-day-label">{{{ item.day_text.replace(/\d+/g, '').trim() || 'DAY' }}}</span>
+							</span>
 						<# } #>
 						<span class="cga-toggle-title">{{{ item.title_text }}}</span>
 					</span>
@@ -834,7 +868,7 @@ class Elementor_Tour_Toggle extends \Elementor\Widget_Base {
 						<span class="cga-icon-open"><i class="fas fa-minus"></i></span>
 					</span>
 				</button>
-				<div class="cga-toggle-content" style="display:none;">
+				<div class="cga-toggle-content" {{{ opened ? '' : 'style="display:none;"' }}}>
 					<div class="cga-toggle-content-inner">{{{ item.content_text }}}</div>
 				</div>
 			</div>

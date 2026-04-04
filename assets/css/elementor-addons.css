@@ -98,8 +98,9 @@
 
 /* ── TOUR TOGGLE ─────────────────────────────────────────────────── */
 .cga-tour-toggles {
-	display: grid;
-	gap: 14px;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
 }
 
 .cga-toggle-item {
@@ -107,23 +108,32 @@
 	border-radius: 3px;
 	overflow: hidden;
 	background: #ffffff;
+	transition: border-color 0.3s cubic-bezier(0.25, 1, 0.35, 1);
+}
+
+.cga-toggle-item.is-open {
+	border-color: #2a4a80;
 }
 
 .cga-toggle-trigger {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	gap: 16px;
 	width: 100%;
-	padding: 18px 20px;
+	padding: 18px 22px;
 	border: 0;
-	background: #f8f8f8;
+	background: #ffffff;
 	text-align: left;
 	cursor: pointer;
-	transition: background-color 0.25s ease, color 0.25s ease;
+	transition: background-color 0.3s cubic-bezier(0.25, 1, 0.35, 1);
 }
 
 .cga-toggle-item.is-open .cga-toggle-trigger {
-	background: #ffffff;
+	background: #e8f1f9;
+}
+
+.cga-toggle-trigger:hover {
+	background: #e8f1f9;
 }
 
 .cga-toggle-header-left {
@@ -135,25 +145,45 @@
 }
 
 .cga-toggle-day {
-	display: inline-flex;
+	flex-shrink: 0;
+	width: 44px;
+	height: 44px;
+	border-radius: 3px;
+	background: #1d3461;
+	display: flex;
+	flex-direction: column;
 	align-items: center;
-	padding: 5px 10px;
-	border-radius: 999px;
-	font-size: 11px;
+	justify-content: center;
+	padding: 4px;
+	transition: background-color 0.3s cubic-bezier(0.25, 1, 0.35, 1);
+}
+
+.cga-toggle-item.is-open .cga-toggle-day {
+	background: #c4973a;
+}
+
+.cga-toggle-day-num {
+	font-family: 'Cormorant Garamond', serif;
+	font-size: 18px;
+	font-weight: 600;
 	line-height: 1;
+	color: #ffffff;
+}
+
+.cga-toggle-day-label {
+	font-size: 7px;
 	font-weight: 700;
-	letter-spacing: 0.08em;
+	line-height: 1.2;
+	letter-spacing: 0.15em;
 	text-transform: uppercase;
-	background: #e8f1f9;
-	color: #1d3461;
-	white-space: nowrap;
+	color: rgba(255, 255, 255, 0.65);
 }
 
 .cga-toggle-title {
-	font-size: 16px;
+	font-size: 13px;
 	font-weight: 600;
 	line-height: 1.4;
-	color: #1c2333;
+	color: #1d3461;
 	word-break: break-word;
 }
 
@@ -165,25 +195,28 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 34px;
-	height: 34px;
+	width: 28px;
+	height: 28px;
 	flex-shrink: 0;
 	border-radius: 50%;
-	background: #e8f1f9;
-	color: #1d3461;
+	border: 1.5px solid #dde3ec;
+	background: transparent;
+	color: #6b7a8d;
 	position: relative;
 	overflow: hidden;
-	transition: background-color 0.25s ease, color 0.25s ease;
+	transition: transform 0.3s cubic-bezier(0.25, 1, 0.35, 1), border-color 0.3s cubic-bezier(0.25, 1, 0.35, 1), background-color 0.3s cubic-bezier(0.25, 1, 0.35, 1), color 0.3s cubic-bezier(0.25, 1, 0.35, 1);
 }
 
 .cga-toggle-icon-wrap i,
 .cga-toggle-icon-wrap svg {
-	font-size: 16px;
-	width: 16px;
-	height: 16px;
+	font-size: 12px;
+	width: 12px;
+	height: 12px;
 }
 
 .cga-toggle-item.is-open .cga-toggle-icon-wrap {
+	transform: rotate(180deg);
+	border-color: #1d3461;
 	background: #1d3461;
 	color: #ffffff;
 }
@@ -215,12 +248,11 @@
 }
 
 .cga-toggle-content-inner {
-	padding: 18px 20px 20px;
-	font-size: 15px;
-	line-height: 1.7;
-	color: #4a5565;
+	padding: 0 22px 22px 82px;
+	font-size: 13px;
+	line-height: 1.75;
+	color: #3d4a5c;
 	background: #ffffff;
-	border-top: 1px solid #eef2f7;
 }
 
 .cga-toggle-content-inner > :first-child {
@@ -237,37 +269,50 @@
 	}
 
 	.cga-toggle-title {
-		font-size: 15px;
+		font-size: 12px;
 	}
 
 	.cga-toggle-content-inner {
-		padding: 16px 18px 18px;
+		padding: 0 18px 18px 72px;
 	}
 }
 
 @media (max-width: 767px) {
 	.cga-toggle-header-left {
 		gap: 10px;
-		align-items: flex-start;
+		align-items: center;
 	}
 
 	.cga-toggle-title {
-		font-size: 14px;
+		font-size: 11px;
 	}
 
 	.cga-toggle-day {
-		font-size: 10px;
+		width: 36px;
+		height: 36px;
+	}
+
+	.cga-toggle-day-num {
+		font-size: 15px;
+	}
+
+	.cga-toggle-day-label {
+		font-size: 6px;
 	}
 
 	.cga-toggle-icon-wrap {
-		width: 30px;
-		height: 30px;
+		width: 24px;
+		height: 24px;
 	}
 
 	.cga-toggle-icon-wrap i,
 	.cga-toggle-icon-wrap svg {
-		font-size: 14px;
-		width: 14px;
-		height: 14px;
+		font-size: 10px;
+		width: 10px;
+		height: 10px;
+	}
+
+	.cga-toggle-content-inner {
+		padding: 0 14px 14px 14px;
 	}
 }
