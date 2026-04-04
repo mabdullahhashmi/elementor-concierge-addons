@@ -4,7 +4,6 @@
 
 (function($) {
 	'use strict';
-	var observerRegistry = {};
 
 	function normalizeId(value) {
 		if (!value) {
@@ -22,16 +21,21 @@
 	}
 
 	function setActiveLink($nav, sectionId) {
-		var $links = $nav.find('a');
-
-		$links.each(function() {
+		$nav.find('a').each(function() {
 			var linkId = normalizeId($(this).attr('data-section')) || normalizeId($(this).attr('href'));
-			$(this).toggleClass('is-active', !!sectionId && linkId === sectionId);
+			var isActive = !!sectionId && linkId === sectionId;
+
+			$(this).toggleClass('is-active', isActive);
+			if (isActive) {
+				$(this).attr('aria-current', 'true');
+			} else {
+				$(this).removeAttr('aria-current');
+			}
 		});
 	}
 
-	function getSections($nav) {
-		var sections = [];
+	function getSectionEntries($nav) {
+		var entries = [];
 
 		$nav.find('a').each(function() {
 			var targetId = normalizeId($(this).attr('data-section')) || normalizeId($(this).attr('href'));
@@ -40,79 +44,93 @@
 				return;
 			}
 
-			var sectionEl = document.getElementById(targetId);
+			var el = document.getElementById(targetId);
 
-			if (sectionEl) {
-				sections.push({
+			if (el) {
+				entries.push({
 					id: targetId,
-					el: sectionEl
+					el: el
 				});
 			}
 		});
 
-		return sections;
+		return entries;
 	}
 
-	function updateActiveByScrollFallback($nav, scrollOffset) {
-		var sections = getSections($nav);
-
-		if (!sections.length) {
-			setActiveLink($nav, '');
-			return;
+	function getActiveSectionId(entries, markerY) {
+		if (!entries.length) {
+			return '';
 		}
 
-		var viewportLine = window.pageYOffset + scrollOffset;
-		var activeId = sections[0].id;
+		var activeId = entries[0].id;
 
-		for (var i = 0; i < sections.length; i++) {
-			var top = $(sections[i].el).offset().top;
+		for (var i = 0; i < entries.length; i++) {
+			var top = $(entries[i].el).offset().top;
 
-			if (viewportLine >= top) {
-				activeId = sections[i].id;
+			if (markerY >= top) {
+				activeId = entries[i].id;
 			} else {
 				break;
 			}
 		}
 
-		setActiveLink($nav, activeId);
+		return activeId;
 	}
 
-	function setupIntersectionObserver($nav, navId, scrollOffset) {
-		if (!('IntersectionObserver' in window)) {
-			return false;
+	function bindScrollSpy($nav) {
+		var navId = $nav.attr('data-scrollspy-id');
+
+		if (!navId) {
+			navId = 'spy-' + Math.random().toString(36).slice(2, 10);
+			$nav.attr('data-scrollspy-id', navId);
 		}
 
-		var sections = getSections($nav);
+		var scrollOffset = parseInt($nav.attr('data-scroll-offset'), 10) || 150;
+		var ns = '.conciergeSpy-' + navId;
+		var ticking = false;
 
-		if (!sections.length) {
-			return false;
+		function refreshActive() {
+			ticking = false;
+			var entries = getSectionEntries($nav);
+			var markerY = window.pageYOffset + scrollOffset + 1;
+			setActiveLink($nav, getActiveSectionId(entries, markerY));
 		}
 
-		if (observerRegistry[navId]) {
-			observerRegistry[navId].disconnect();
-			delete observerRegistry[navId];
+		function requestRefresh() {
+			if (ticking) {
+				return;
+			}
+
+			ticking = true;
+			window.requestAnimationFrame(refreshActive);
 		}
 
-		var currentActive = '';
-		var observer = new IntersectionObserver(function(entries) {
-			entries.forEach(function(entry) {
-				if (entry.isIntersecting) {
-					currentActive = entry.target.id;
-					setActiveLink($nav, currentActive);
-				}
-			});
-		}, {
-			root: null,
-			rootMargin: '-' + scrollOffset + 'px 0px -55% 0px',
-			threshold: [0, 0.1, 0.25, 0.5, 1]
+		$(window).off('scroll' + ns).on('scroll' + ns, requestRefresh);
+		$(window).off('resize' + ns).on('resize' + ns, requestRefresh);
+		$(window).off('load' + ns).on('load' + ns, requestRefresh);
+
+		$nav.find('a').off('click' + ns).on('click' + ns, function(e) {
+			e.preventDefault();
+
+			var targetId = normalizeId($(this).attr('data-section')) || normalizeId($(this).attr('href'));
+			var $target = targetId ? $('#' + targetId) : $();
+
+			if (!$target.length) {
+				return;
+			}
+
+			setActiveLink($nav, targetId);
+
+			$('html, body').stop(true).animate(
+				{
+					scrollTop: $target.offset().top - scrollOffset
+				},
+				500,
+				requestRefresh
+			);
 		});
 
-		sections.forEach(function(section) {
-			observer.observe(section.el);
-		});
-
-		observerRegistry[navId] = observer;
-		return true;
+		requestRefresh();
 	}
 
 	/**
@@ -125,54 +143,8 @@
 			return;
 		}
 
-		// Handle each sidebar nav separately
 		$navs.each(function() {
-			var $nav = $(this);
-			var navId = $nav.attr('data-scrollspy-id');
-
-			if (!navId) {
-				navId = 'spy-' + Math.random().toString(36).slice(2, 10);
-				$nav.attr('data-scrollspy-id', navId);
-			}
-
-			var scrollOffset = parseInt($nav.attr('data-scroll-offset')) || 150;
-			var scrollNamespace = '.conciergeSpy-' + navId;
-
-			$(window).off('scroll' + scrollNamespace);
-
-			var hasObserver = setupIntersectionObserver($nav, navId, scrollOffset);
-
-			if (!hasObserver) {
-				$(window).on('scroll' + scrollNamespace, function() {
-					updateActiveByScrollFallback($nav, scrollOffset);
-				});
-			}
-
-			updateActiveByScrollFallback($nav, scrollOffset);
-
-			// Handle link clicks
-			$nav.find('a').off('click' + scrollNamespace).on('click' + scrollNamespace, function(e) {
-				e.preventDefault();
-
-				var targetId = normalizeId($(this).attr('data-section'));
-
-				if (!targetId) {
-					targetId = normalizeId($(this).attr('href'));
-				}
-
-				var $target = $('#' + targetId);
-
-				if ($target.length > 0) {
-					setActiveLink($nav, targetId);
-
-					$('html, body').animate(
-						{
-							scrollTop: $target.offset().top - scrollOffset
-						},
-						600
-					);
-				}
-			});
+			bindScrollSpy($(this));
 		});
 	}
 
@@ -188,7 +160,6 @@
 		});
 	});
 
-	// Support Elementor frontend rendering hooks
 	$(window).on('elementor/frontend/init', function() {
 		if (window.elementorFrontend && window.elementorFrontend.hooks) {
 			window.elementorFrontend.hooks.addAction('frontend/element_ready/global', function() {
@@ -197,18 +168,6 @@
 		}
 	});
 
-	// Reinitialize on window load (images might affect layout)
-	$(window).on('load', function() {
-		initScrollSpy();
-	});
-
-	// Reinitialize on window resize
-	var resizeTimer;
-	$(window).on('resize', function() {
-		clearTimeout(resizeTimer);
-		resizeTimer = setTimeout(function() {
-			initScrollSpy();
-		}, 250);
-	});
+	$(window).on('load', initScrollSpy);
 
 })(jQuery);
