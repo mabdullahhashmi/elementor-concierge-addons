@@ -68,6 +68,17 @@ class Elementor_Tour_Toggle extends \Elementor\Widget_Base {
 		);
 
 		$repeater->add_control(
+			'subtitle_text',
+			[
+				'label'       => esc_html__( 'Subtitle', 'elementor-concierge-addons' ),
+				'type'        => \Elementor\Controls_Manager::TEXT,
+				'default'     => '',
+				'placeholder' => esc_html__( 'e.g. Morning tee time · Ocean views', 'elementor-concierge-addons' ),
+				'label_block' => true,
+			]
+		);
+
+		$repeater->add_control(
 			'content_text',
 			[
 				'label'   => esc_html__( 'Content', 'elementor-concierge-addons' ),
@@ -559,6 +570,27 @@ class Elementor_Tour_Toggle extends \Elementor\Widget_Base {
 		$this->end_controls_tab();
 		$this->end_controls_tabs();
 
+		$this->add_group_control(
+			\Elementor\Group_Control_Typography::get_type(),
+			[
+				'name'     => 'subtitle_typography',
+				'label'    => esc_html__( 'Subtitle Typography', 'elementor-concierge-addons' ),
+				'selector' => '{{WRAPPER}} .cga-toggle-subtitle',
+			]
+		);
+
+		$this->add_control(
+			'subtitle_color',
+			[
+				'label'     => esc_html__( 'Subtitle Color', 'elementor-concierge-addons' ),
+				'type'      => \Elementor\Controls_Manager::COLOR,
+				'default'   => '#6b7a8d',
+				'selectors' => [
+					'{{WRAPPER}} .cga-toggle-subtitle' => 'color: {{VALUE}};',
+				],
+			]
+		);
+
 		$this->end_controls_section();
 
 		$this->start_controls_section(
@@ -822,7 +854,12 @@ class Elementor_Tour_Toggle extends \Elementor\Widget_Base {
 									<span class="cga-toggle-day-label"><?php echo esc_html( strtoupper( $day_lbl ) ); ?></span>
 								</span>
 							<?php endif; ?>
+						<span class="cga-toggle-title-wrap">
 							<span class="cga-toggle-title"><?php echo esc_html( $item['title_text'] ); ?></span>
+							<?php if ( ! empty( $item['subtitle_text'] ) ) : ?>
+								<span class="cga-toggle-subtitle"><?php echo esc_html( $item['subtitle_text'] ); ?></span>
+							<?php endif; ?>
+						</span>
 						</span>
 						<span class="cga-toggle-icon-wrap" aria-hidden="true">
 							<span class="cga-icon-closed">
@@ -858,10 +895,15 @@ class Elementor_Tour_Toggle extends \Elementor\Widget_Base {
 						<# if ( item.day_text ) { #>
 							<span class="cga-toggle-day">
 								<span class="cga-toggle-day-num">{{{ (item.day_text.match(/\d+/) || [''])[0] }}}</span>
-								<span class="cga-toggle-day-label">{{{ item.day_text.replace(/\d+/g, '').trim() || 'DAY' }}}</span>
-							</span>
-						<# } #>
+							<span class="cga-toggle-day-label">{{{ item.day_text.replace(/\d+/g, '').trim().toUpperCase() || 'DAY' }}}</span>
+						</span>
+					<# } #>
+					<span class="cga-toggle-title-wrap">
 						<span class="cga-toggle-title">{{{ item.title_text }}}</span>
+						<# if ( item.subtitle_text ) { #>
+							<span class="cga-toggle-subtitle">{{{ item.subtitle_text }}}</span>
+						<# } #>
+					</span>
 					</span>
 					<span class="cga-toggle-icon-wrap" aria-hidden="true">
 						<span class="cga-icon-closed"><i class="fas fa-chevron-down"></i></span>
