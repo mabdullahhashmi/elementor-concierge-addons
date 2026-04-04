@@ -5,138 +5,149 @@
 (function($) {
 	'use strict';
 
+	// ─── Helpers ──────────────────────────────────────────────────────
+
 	function normalizeId(value) {
 		if (!value) return '';
-		var text = String(value).trim();
-		var hashIndex = text.indexOf('#');
-		if (hashIndex !== -1) {
-			text = text.substring(hashIndex + 1);
+		return String(value).trim().replace(/^.*#/, '').replace(/^#+/, '').trim();
+	}
+
+	function scrollTop() {
+		return window.pageYOffset || document.documentElement.scrollTop || 0;
+	}
+
+	// Absolute top of an element from document top (reliable during scroll)
+	function absoluteTop(el) {
+		return el.getBoundingClientRect().top + scrollTop();
+	}
+
+	// ─── Scroll Spy ───────────────────────────────────────────────────
+
+	function buildEntries($nav) {
+		var list = [];
+		$nav.find('a').each(function() {
+			var id = normalizeId($(this).attr('data-section')) || normalizeId($(this).attr('href'));
+			if (!id) return;
+			var el = document.getElementById(id);
+			if (el) list.push({ id: id, el: el });
+		});
+		return list;
+	}
+
+	function pickActive(entries, offset) {
+		// The active section is the one with the LARGEST absoluteTop
+		// that is still <= scrollTop + offset (i.e has crossed the threshold)
+		var st      = scrollTop();
+		var thresh  = st + offset;
+		var active  = '';
+		var maxTop  = -Infinity;
+
+		for (var i = 0; i < entries.length; i++) {
+			var t = absoluteTop(entries[i].el);
+			if (t <= thresh && t > maxTop) {
+				maxTop = t;
+				active = entries[i].id;
+			}
 		}
-		return text.replace(/^#+/, '').trim();
-	}
 
-	function setActiveLink($nav, sectionId) {
-		$nav.find('a').each(function() {
-			var linkId = normalizeId($(this).attr('data-section')) || normalizeId($(this).attr('href'));
-			var isActive = !!sectionId && linkId === sectionId;
-			$(this).toggleClass('is-active', isActive);
-			if (isActive) {
-				$(this).attr('aria-current', 'true');
-			} else {
-				$(this).removeAttr('aria-current');
-			}
-		});
-	}
-
-	function getSectionEntries($nav) {
-		var entries = [];
-		$nav.find('a').each(function() {
-			var targetId = normalizeId($(this).attr('data-section')) || normalizeId($(this).attr('href'));
-			if (!targetId) return;
-			var el = document.getElementById(targetId);
-			if (el) {
-				entries.push({ id: targetId, el: el });
-			}
-		});
-		return entries;
-	}
-
-	function getActiveSectionId(entries, windowTop, offset) {
-		if (!entries.length) return '';
-
-		// Sort entries by current vertical position so order in the nav doesn't matter
-		var sorted = entries.slice().sort(function(a, b) {
-			return $(a.el).offset().top - $(b.el).offset().top;
-		});
-
-		var threshold = windowTop + offset;
-		var active = sorted[0].id; // default to topmost section
-
-		for (var i = 0; i < sorted.length; i++) {
-			var top = $(sorted[i].el).offset().top;
-			if (threshold >= top) {
-				active = sorted[i].id;
-			} else {
-				break;
+		// Nothing above threshold yet → activate whichever section is nearest
+		if (!active && entries.length) {
+			var minDist = Infinity;
+			for (var j = 0; j < entries.length; j++) {
+				var dist = Math.abs(absoluteTop(entries[j].el) - thresh);
+				if (dist < minDist) {
+					minDist = dist;
+					active  = entries[j].id;
+				}
 			}
 		}
 
 		return active;
 	}
 
+	function setActive($nav, id) {
+		$nav.find('a').each(function() {
+			var linkId = normalizeId($(this).attr('data-section')) || normalizeId($(this).attr('href'));
+			var on = !!id && linkId === id;
+			$(this).toggleClass('is-active', on);
+			if (on) $(this).attr('aria-current', 'true');
+			else    $(this).removeAttr('aria-current');
+		});
+	}
+
 	function bindScrollSpy($nav) {
-		var navId = $nav.attr('data-scrollspy-id');
-		if (!navId) {
-			navId = 'spy-' + Math.random().toString(36).slice(2, 10);
-			$nav.attr('data-scrollspy-id', navId);
-		}
+		// ── Guard: only bind once per nav element ────────────────────
+		if ($nav.data('cga-spy-bound')) return;
+		$nav.data('cga-spy-bound', true);
 
-		var scrollOffset = parseInt($nav.attr('data-scroll-offset'), 10);
-		if (isNaN(scrollOffset) || scrollOffset < 0) scrollOffset = 150;
+		var offset = parseInt($nav.attr('data-scroll-offset'), 10);
+		if (isNaN(offset) || offset < 0) offset = 150;
 
-		var ns = '.conciergeSpy-' + navId;
 		var ticking = false;
 
-		function refreshActive() {
+		function refresh() {
 			ticking = false;
-			var entries = getSectionEntries($nav);
-			setActiveLink($nav, getActiveSectionId(entries, window.pageYOffset, scrollOffset));
+			var entries = buildEntries($nav);
+			if (!entries.length) return;
+			setActive($nav, pickActive(entries, offset));
 		}
 
-		function requestRefresh() {
+		function onScroll() {
 			if (ticking) return;
 			ticking = true;
-			window.requestAnimationFrame(refreshActive);
+			requestAnimationFrame(refresh);
 		}
 
-		$(window).off('scroll' + ns).on('scroll' + ns, requestRefresh);
-		$(window).off('resize' + ns).on('resize' + ns, requestRefresh);
+		// Use native addEventListener — cannot accidentally be removed by jQuery .off()
+		window.addEventListener('scroll', onScroll, { passive: true });
+		window.addEventListener('resize', onScroll, { passive: true });
 
-		$nav.find('a').off('click' + ns).on('click' + ns, function(e) {
+		// Click: smooth scroll to section
+		$nav.find('a').on('click.cgaSpy', function(e) {
 			e.preventDefault();
-			var targetId = normalizeId($(this).attr('data-section')) || normalizeId($(this).attr('href'));
-			var $target = targetId ? $('#' + targetId) : $();
-			if (!$target.length) return;
-			setActiveLink($nav, targetId);
-			$('html, body').stop(true).animate(
-				{ scrollTop: $target.offset().top - scrollOffset },
-				500,
-				requestRefresh
-			);
+			var id = normalizeId($(this).attr('data-section')) || normalizeId($(this).attr('href'));
+			var el = id ? document.getElementById(id) : null;
+			if (!el) return;
+			setActive($nav, id);
+			var dest = absoluteTop(el) - offset;
+			$('html, body').stop(true).animate({ scrollTop: dest }, 500, function() {
+				// Re-check after animation in case layout shifted
+				refresh();
+			});
 		});
 
-		// Run immediately and once more after a short delay (handles lazy images / late layout)
-		requestRefresh();
-		setTimeout(requestRefresh, 600);
+		// Initial read — run now and again after layout settles
+		refresh();
+		setTimeout(refresh, 500);
 	}
 
 	function initScrollSpy() {
-		var $navs = $('.sidebar-nav[data-scroll-spy="true"]');
-		if (!$navs.length) return;
-		$navs.each(function() {
+		$('.sidebar-nav[data-scroll-spy="true"]').each(function() {
 			bindScrollSpy($(this));
 		});
 	}
 
+	// ─── Tour Toggles ─────────────────────────────────────────────────
+
 	function bindTourToggles($scope) {
-		var $root = $scope && $scope.length ? $scope : $(document);
+		var $root    = $scope && $scope.length ? $scope : $(document);
 		var $toggles = $root.find('.cga-tour-toggles');
 		if (!$toggles.length) return;
 
 		$toggles.each(function() {
-			var $toggleWrap = $(this);
-			var id = $toggleWrap.attr('data-toggle-id');
+			var $wrap = $(this);
+			var id    = $wrap.attr('data-toggle-id');
 			if (!id) {
 				id = Math.random().toString(36).slice(2, 10);
-				$toggleWrap.attr('data-toggle-id', id);
+				$wrap.attr('data-toggle-id', id);
 			}
-			var ns = '.cgaToggle-' + id;
-			var speed = parseInt($toggleWrap.attr('data-speed'), 10);
+			var ns         = '.cgaT-' + id;
+			var speed      = parseInt($wrap.attr('data-speed'), 10);
+			var singleOpen = $wrap.attr('data-single-open') !== 'no';
+			var openFirst  = $wrap.attr('data-open-first') === 'yes';
 			if (isNaN(speed)) speed = 260;
-			var singleOpen = $toggleWrap.attr('data-single-open') !== 'no';
-			var openFirst  = $toggleWrap.attr('data-open-first') === 'yes';
 
-			$toggleWrap.find('.cga-toggle-item').each(function(index) {
+			$wrap.find('.cga-toggle-item').each(function(index) {
 				var $item    = $(this);
 				var $content = $item.find('.cga-toggle-content').first();
 				var $trigger = $item.find('.cga-toggle-trigger').first();
@@ -151,59 +162,72 @@
 				}
 			});
 
-			$toggleWrap.find('.cga-toggle-trigger').off('click' + ns).on('click' + ns, function() {
-				var $trigger  = $(this);
-				var $item     = $trigger.closest('.cga-toggle-item');
-				var $content  = $item.find('.cga-toggle-content').first();
-				var willOpen  = !$item.hasClass('is-open');
+			$wrap.find('.cga-toggle-trigger').off('click' + ns).on('click' + ns, function() {
+				var $trigger = $(this);
+				var $item    = $trigger.closest('.cga-toggle-item');
+				var $content = $item.find('.cga-toggle-content').first();
+				var open     = !$item.hasClass('is-open');
 
 				if (singleOpen) {
-					$toggleWrap.find('.cga-toggle-item').not($item)
+					$wrap.find('.cga-toggle-item').not($item)
 						.removeClass('is-open')
 						.find('.cga-toggle-trigger').attr('aria-expanded', 'false');
-					$toggleWrap.find('.cga-toggle-item').not($item)
+					$wrap.find('.cga-toggle-item').not($item)
 						.find('.cga-toggle-content').stop(true, true).slideUp(speed);
 				}
 
-				$item.toggleClass('is-open', willOpen);
-				$trigger.attr('aria-expanded', willOpen ? 'true' : 'false');
+				$item.toggleClass('is-open', open);
+				$trigger.attr('aria-expanded', open ? 'true' : 'false');
 				$content.stop(true, true).slideToggle(speed);
 			});
 		});
 	}
 
-	// ── Boot ────────────────────────────────────────────────────────
-	function boot() {
-		initScrollSpy();
-		bindTourToggles($(document));
-	}
-
-	function hookElementor() {
-		if (!window.elementorFrontend || !window.elementorFrontend.hooks) return;
-		window.elementorFrontend.hooks.addAction('frontend/element_ready/global', function() {
-			initScrollSpy();
-			bindTourToggles($(document));
-		});
-		window.elementorFrontend.hooks.addAction('frontend/element_ready/tour-toggle.default', function($scope) {
-			bindTourToggles($scope);
-		});
-	}
+	// ─── Boot ─────────────────────────────────────────────────────────
 
 	$(document).ready(function() {
-		boot();
-		// Elementor may already be initialized by ready time
+		initScrollSpy();
+		bindTourToggles($(document));
+
+		// Hook Elementor widget-ready events (runs once per widget type, not globally)
+		function hookElementor() {
+			if (!window.elementorFrontend || !window.elementorFrontend.hooks) return;
+
+			// sidebar-nav.default fires only when the sidebar nav widget is ready
+			window.elementorFrontend.hooks.addAction(
+				'frontend/element_ready/sidebar-nav.default',
+				function() { initScrollSpy(); }
+			);
+
+			// tour-toggle.default fires only when a tour toggle widget is ready
+			window.elementorFrontend.hooks.addAction(
+				'frontend/element_ready/tour-toggle.default',
+				function($scope) { bindTourToggles($scope); }
+			);
+		}
+
 		if (window.elementorFrontend) {
 			hookElementor();
 		} else {
-			$(window).on('elementor/frontend/init', hookElementor);
+			$(window).one('elementor/frontend/init', hookElementor);
 		}
 
-		$(document).on('elementor/popup/show', boot);
+		$(document).on('elementor/popup/show', function() {
+			initScrollSpy();
+			bindTourToggles($(document));
+		});
 	});
 
+	// Re-measure section positions after all assets are loaded
 	$(window).on('load', function() {
-		// Re-run after full load (images loaded = correct offsets)
-		initScrollSpy();
+		$('.sidebar-nav[data-scroll-spy="true"]').each(function() {
+			// Force a fresh read — don't rebind, just re-check active
+			var $nav   = $(this);
+			var offset = parseInt($nav.attr('data-scroll-offset'), 10);
+			if (isNaN(offset) || offset < 0) offset = 150;
+			var entries = buildEntries($nav);
+			if (entries.length) setActive($nav, pickActive(entries, offset));
+		});
 	});
 
 })(jQuery);
