@@ -4,6 +4,7 @@
 
 (function($) {
 	'use strict';
+	var observerRegistry = {};
 
 	function normalizeId(value) {
 		if (!value) {
@@ -18,6 +19,100 @@
 		}
 
 		return text.replace(/^#+/, '').trim();
+	}
+
+	function setActiveLink($nav, sectionId) {
+		var $links = $nav.find('a');
+
+		$links.each(function() {
+			var linkId = normalizeId($(this).attr('data-section')) || normalizeId($(this).attr('href'));
+			$(this).toggleClass('is-active', !!sectionId && linkId === sectionId);
+		});
+	}
+
+	function getSections($nav) {
+		var sections = [];
+
+		$nav.find('a').each(function() {
+			var targetId = normalizeId($(this).attr('data-section')) || normalizeId($(this).attr('href'));
+
+			if (!targetId) {
+				return;
+			}
+
+			var sectionEl = document.getElementById(targetId);
+
+			if (sectionEl) {
+				sections.push({
+					id: targetId,
+					el: sectionEl
+				});
+			}
+		});
+
+		return sections;
+	}
+
+	function updateActiveByScrollFallback($nav, scrollOffset) {
+		var sections = getSections($nav);
+
+		if (!sections.length) {
+			setActiveLink($nav, '');
+			return;
+		}
+
+		var viewportLine = window.pageYOffset + scrollOffset;
+		var activeId = sections[0].id;
+
+		for (var i = 0; i < sections.length; i++) {
+			var top = $(sections[i].el).offset().top;
+
+			if (viewportLine >= top) {
+				activeId = sections[i].id;
+			} else {
+				break;
+			}
+		}
+
+		setActiveLink($nav, activeId);
+	}
+
+	function setupIntersectionObserver($nav, navId, scrollOffset) {
+		if (!('IntersectionObserver' in window)) {
+			return false;
+		}
+
+		var sections = getSections($nav);
+
+		if (!sections.length) {
+			return false;
+		}
+
+		if (observerRegistry[navId]) {
+			observerRegistry[navId].disconnect();
+			delete observerRegistry[navId];
+		}
+
+		var currentActive = '';
+		var observer = new IntersectionObserver(function(entries) {
+			entries.forEach(function(entry) {
+				if (entry.isIntersecting) {
+					currentActive = entry.target.id;
+					setActiveLink($nav, currentActive);
+				}
+			});
+		}, {
+			root: null,
+			rootMargin: '-' + scrollOffset + 'px 0px -55% 0px',
+			threshold: [0, 0.1, 0.25, 0.5, 1]
+		});
+
+		sections.forEach(function(section) {
+			observer.observe(section.el);
+		});
+
+		observerRegistry[navId] = observer;
+		return true;
 	}
 
 	/**
@@ -43,13 +138,17 @@
 			var scrollOffset = parseInt($nav.attr('data-scroll-offset')) || 150;
 			var scrollNamespace = '.conciergeSpy-' + navId;
 
-			// Update active link on scroll
-			$(window).off('scroll' + scrollNamespace).on('scroll' + scrollNamespace, function() {
-				updateActiveLink($nav, scrollOffset);
-			});
+			$(window).off('scroll' + scrollNamespace);
 
-			// Initial call
-			updateActiveLink($nav, scrollOffset);
+			var hasObserver = setupIntersectionObserver($nav, navId, scrollOffset);
+
+			if (!hasObserver) {
+				$(window).on('scroll' + scrollNamespace, function() {
+					updateActiveByScrollFallback($nav, scrollOffset);
+				});
+			}
+
+			updateActiveByScrollFallback($nav, scrollOffset);
 
 			// Handle link clicks
 			$nav.find('a').off('click' + scrollNamespace).on('click' + scrollNamespace, function(e) {
@@ -64,13 +163,8 @@
 				var $target = $('#' + targetId);
 
 				if ($target.length > 0) {
-					// Remove active class from all links
-					$nav.find('a').removeClass('is-active');
+					setActiveLink($nav, targetId);
 
-					// Add active class to clicked link
-					$(this).addClass('is-active');
-
-					// Smooth scroll to target
 					$('html, body').animate(
 						{
 							scrollTop: $target.offset().top - scrollOffset
@@ -79,82 +173,6 @@
 					);
 				}
 			});
-		});
-	}
-
-	/**
-	 * Update active link based on scroll position
-	 */
-	function updateActiveLink($nav, scrollOffset) {
-		var sections = {};
-		var $links = $nav.find('a');
-
-		// Build sections object
-		$links.each(function() {
-			var targetId = normalizeId($(this).attr('data-section'));
-
-			if (!targetId) {
-				targetId = normalizeId($(this).attr('href'));
-			}
-
-			if (targetId) {
-				sections[targetId] = $('#' + targetId);
-			}
-		});
-
-		// Get current scroll position
-		var scrollPos = $(window).scrollTop() + scrollOffset;
-
-		// Find which section is currently in view
-		var currentSection = null;
-
-		$.each(sections, function(targetId, $section) {
-			if ($section.length > 0) {
-				var sectionTop = $section.offset().top;
-				var sectionBottom = sectionTop + $section.outerHeight();
-
-				if (scrollPos >= sectionTop && scrollPos < sectionBottom) {
-					currentSection = targetId;
-					return false;
-				}
-			}
-		});
-
-		// If no section found, check which is closest
-		if (!currentSection) {
-			var closestDistance = Infinity;
-			var closestSection = null;
-
-			$.each(sections, function(targetId, $section) {
-				if ($section.length > 0) {
-					var sectionTop = $section.offset().top;
-					var distance = Math.abs(sectionTop - scrollPos);
-
-					if (distance < closestDistance) {
-						closestDistance = distance;
-						closestSection = targetId;
-					}
-				}
-			});
-
-			if (closestDistance < 500) {
-				currentSection = closestSection;
-			}
-		}
-
-		// Update active class
-		$links.each(function() {
-			var targetId = normalizeId($(this).attr('data-section'));
-
-			if (!targetId) {
-				targetId = normalizeId($(this).attr('href'));
-			}
-
-			if (targetId === currentSection) {
-				$(this).addClass('is-active');
-			} else {
-				$(this).removeClass('is-active');
-			}
 		});
 	}
 
