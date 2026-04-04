@@ -185,6 +185,7 @@
 	line-height: 1.4;
 	color: #1d3461;
 	word-break: break-word;
+	flex: 1;
 }
 
 .cga-toggle-item.is-open .cga-toggle-title {
@@ -198,6 +199,7 @@
 	width: 28px;
 	height: 28px;
 	flex-shrink: 0;
+	margin-left: auto;
 	border-radius: 50%;
 	border: 1.5px solid #dde3ec;
 	background: transparent;
@@ -313,6 +315,6 @@
 	}
 
 	.cga-toggle-content-inner {
-		padding: 0 14px 14px 14px;
+		padding: 0 14px 14px 58px;
 	}
 }

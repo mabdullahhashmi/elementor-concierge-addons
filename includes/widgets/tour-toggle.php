@@ -139,7 +139,7 @@ class Elementor_Tour_Toggle extends \Elementor\Widget_Base {
 				'label'   => esc_html__( 'Closed Icon', 'elementor-concierge-addons' ),
 				'type'    => \Elementor\Controls_Manager::ICONS,
 				'default' => [
-					'value'   => 'fas fa-plus',
+					'value'   => 'fas fa-chevron-down',
 					'library' => 'fa-solid',
 				],
 			]
@@ -151,7 +151,7 @@ class Elementor_Tour_Toggle extends \Elementor\Widget_Base {
 				'label'   => esc_html__( 'Open Icon', 'elementor-concierge-addons' ),
 				'type'    => \Elementor\Controls_Manager::ICONS,
 				'default' => [
-					'value'   => 'fas fa-minus',
+					'value'   => 'fas fa-chevron-up',
 					'library' => 'fa-solid',
 				],
 			]
@@ -864,8 +864,8 @@ class Elementor_Tour_Toggle extends \Elementor\Widget_Base {
 						<span class="cga-toggle-title">{{{ item.title_text }}}</span>
 					</span>
 					<span class="cga-toggle-icon-wrap" aria-hidden="true">
-						<span class="cga-icon-closed"><i class="fas fa-plus"></i></span>
-						<span class="cga-icon-open"><i class="fas fa-minus"></i></span>
+						<span class="cga-icon-closed"><i class="fas fa-chevron-down"></i></span>
+						<span class="cga-icon-open"><i class="fas fa-chevron-up"></i></span>
 					</span>
 				</button>
 				<div class="cga-toggle-content" {{{ opened ? '' : 'style="display:none;"' }}}>
