@@ -5,6 +5,21 @@
 (function($) {
 	'use strict';
 
+	function normalizeId(value) {
+		if (!value) {
+			return '';
+		}
+
+		var text = String(value).trim();
+		var hashIndex = text.indexOf('#');
+
+		if (hashIndex !== -1) {
+			text = text.substring(hashIndex + 1);
+		}
+
+		return text.replace(/^#+/, '').trim();
+	}
+
 	/**
 	 * Scroll Spy Handler
 	 */
@@ -18,10 +33,18 @@
 		// Handle each sidebar nav separately
 		$navs.each(function() {
 			var $nav = $(this);
+			var navId = $nav.attr('data-scrollspy-id');
+
+			if (!navId) {
+				navId = 'spy-' + Math.random().toString(36).slice(2, 10);
+				$nav.attr('data-scrollspy-id', navId);
+			}
+
 			var scrollOffset = parseInt($nav.attr('data-scroll-offset')) || 150;
+			var scrollNamespace = '.conciergeSpy-' + navId;
 
 			// Update active link on scroll
-			$(document).on('scroll', function() {
+			$(window).off('scroll' + scrollNamespace).on('scroll' + scrollNamespace, function() {
 				updateActiveLink($nav, scrollOffset);
 			});
 
@@ -29,17 +52,16 @@
 			updateActiveLink($nav, scrollOffset);
 
 			// Handle link clicks
-			$nav.find('a').on('click', function(e) {
+			$nav.find('a').off('click' + scrollNamespace).on('click' + scrollNamespace, function(e) {
 				e.preventDefault();
 
-				var targetId = $(this).attr('data-section');
-				var $target = $('#' + targetId);
+				var targetId = normalizeId($(this).attr('data-section'));
 
-				if ($target.length === 0) {
-					// Try with hash
-					targetId = $(this).attr('href').replace('#', '');
-					$target = $('#' + targetId);
+				if (!targetId) {
+					targetId = normalizeId($(this).attr('href'));
 				}
+
+				var $target = $('#' + targetId);
 
 				if ($target.length > 0) {
 					// Remove active class from all links
@@ -69,7 +91,12 @@
 
 		// Build sections object
 		$links.each(function() {
-			var targetId = $(this).attr('data-section');
+			var targetId = normalizeId($(this).attr('data-section'));
+
+			if (!targetId) {
+				targetId = normalizeId($(this).attr('href'));
+			}
+
 			if (targetId) {
 				sections[targetId] = $('#' + targetId);
 			}
@@ -117,7 +144,11 @@
 
 		// Update active class
 		$links.each(function() {
-			var targetId = $(this).attr('data-section');
+			var targetId = normalizeId($(this).attr('data-section'));
+
+			if (!targetId) {
+				targetId = normalizeId($(this).attr('href'));
+			}
 
 			if (targetId === currentSection) {
 				$(this).addClass('is-active');
@@ -137,6 +168,15 @@
 		$(document).on('elementor/popup/show', function() {
 			initScrollSpy();
 		});
+	});
+
+	// Support Elementor frontend rendering hooks
+	$(window).on('elementor/frontend/init', function() {
+		if (window.elementorFrontend && window.elementorFrontend.hooks) {
+			window.elementorFrontend.hooks.addAction('frontend/element_ready/global', function() {
+				initScrollSpy();
+			});
+		}
 	});
 
 	// Reinitialize on window load (images might affect layout)

@@ -363,10 +363,22 @@ class Elementor_Sidebar_Nav extends \Elementor\Widget_Base {
 				<?php
 				foreach ( $nav_items as $item ) {
 					$nav_label = $item['nav_label'];
-					$nav_link  = $item['nav_link'];
+					$nav_link_raw = isset( $item['nav_link'] ) ? trim( $item['nav_link'] ) : '';
+					$fragment = wp_parse_url( $nav_link_raw, PHP_URL_FRAGMENT );
+					$section_id = is_string( $fragment ) ? ltrim( $fragment, '#' ) : '';
+
+					if ( empty( $section_id ) && ! empty( $nav_link_raw ) && 0 === strpos( $nav_link_raw, '#' ) ) {
+						$section_id = ltrim( $nav_link_raw, '#' );
+					}
+
+					if ( ! empty( $nav_link_raw ) && 0 === strpos( $nav_link_raw, '#' ) ) {
+						$nav_link = '#' . ltrim( $nav_link_raw, '#' );
+					} else {
+						$nav_link = esc_url( $nav_link_raw );
+					}
 					?>
 					<li>
-						<a href="<?php echo esc_url( $nav_link ); ?>" class="nav-link" data-section="<?php echo esc_attr( ltrim( $nav_link, '#' ) ); ?>">
+						<a href="<?php echo esc_attr( $nav_link ); ?>" class="nav-link" data-section="<?php echo esc_attr( $section_id ); ?>">
 							<?php echo esc_html( $nav_label ); ?>
 						</a>
 					</li>
