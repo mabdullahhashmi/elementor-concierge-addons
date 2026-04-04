@@ -61,6 +61,10 @@ class Elementor_Concierge_Addons {
 		// Register Sidebar Nav widget
 		require_once ELEMENTOR_CONCIERGE_ADDONS_PATH . 'includes/widgets/sidebar-nav.php';
 		$widgets_manager->register( new \Elementor_Sidebar_Nav() );
+
+		// Register Tour Toggle widget
+		require_once ELEMENTOR_CONCIERGE_ADDONS_PATH . 'includes/widgets/tour-toggle.php';
+		$widgets_manager->register( new \Elementor_Tour_Toggle() );
 	}
 
 	/**

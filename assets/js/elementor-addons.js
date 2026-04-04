@@ -148,15 +148,75 @@
 		});
 	}
 
+	function bindTourToggles($scope) {
+		var $root = $scope && $scope.length ? $scope : $(document);
+		var $toggles = $root.find('.cga-tour-toggles');
+
+		if (!$toggles.length) {
+			return;
+		}
+
+		$toggles.each(function() {
+			var $toggleWrap = $(this);
+			var ns = '.cgaToggle-' + ($toggleWrap.attr('data-toggle-id') || Math.random().toString(36).slice(2, 10));
+			var speed = parseInt($toggleWrap.attr('data-speed'), 10);
+			var singleOpen = $toggleWrap.attr('data-single-open') !== 'no';
+			var openFirst = $toggleWrap.attr('data-open-first') === 'yes';
+
+			if (!$toggleWrap.attr('data-toggle-id')) {
+				$toggleWrap.attr('data-toggle-id', ns.replace('.cgaToggle-', ''));
+			}
+
+			if (isNaN(speed)) {
+				speed = 260;
+			}
+
+			$toggleWrap.find('.cga-toggle-item').each(function(index) {
+				var $item = $(this);
+				var $content = $item.find('.cga-toggle-content').first();
+				var $trigger = $item.find('.cga-toggle-trigger').first();
+
+				if (openFirst && index === 0) {
+					$item.addClass('is-open');
+					$trigger.attr('aria-expanded', 'true');
+					$content.show();
+				} else if (!$item.hasClass('is-open')) {
+					$trigger.attr('aria-expanded', 'false');
+					$content.hide();
+				}
+			});
+
+			$toggleWrap.find('.cga-toggle-trigger').off('click' + ns).on('click' + ns, function() {
+				var $trigger = $(this);
+				var $item = $trigger.closest('.cga-toggle-item');
+				var $content = $item.find('.cga-toggle-content').first();
+				var willOpen = !$item.hasClass('is-open');
+
+				if (singleOpen) {
+					$toggleWrap.find('.cga-toggle-item').not($item).removeClass('is-open')
+						.find('.cga-toggle-trigger').attr('aria-expanded', 'false');
+					$toggleWrap.find('.cga-toggle-item').not($item)
+						.find('.cga-toggle-content').stop(true, true).slideUp(speed);
+				}
+
+				$item.toggleClass('is-open', willOpen);
+				$trigger.attr('aria-expanded', willOpen ? 'true' : 'false');
+				$content.stop(true, true).slideToggle(speed);
+			});
+		});
+	}
+
 	/**
 	 * Initialize on document ready
 	 */
 	$(document).ready(function() {
 		initScrollSpy();
+		bindTourToggles($(document));
 
 		// Reinitialize on Elementor updates (for live preview)
 		$(document).on('elementor/popup/show', function() {
 			initScrollSpy();
+			bindTourToggles($(document));
 		});
 	});
 
@@ -164,10 +224,18 @@
 		if (window.elementorFrontend && window.elementorFrontend.hooks) {
 			window.elementorFrontend.hooks.addAction('frontend/element_ready/global', function() {
 				initScrollSpy();
+				bindTourToggles($(document));
+			});
+
+			window.elementorFrontend.hooks.addAction('frontend/element_ready/tour-toggle.default', function($scope) {
+				bindTourToggles($scope);
 			});
 		}
 	});
 
-	$(window).on('load', initScrollSpy);
+	$(window).on('load', function() {
+		initScrollSpy();
+		bindTourToggles($(document));
+	});
 
 })(jQuery);
