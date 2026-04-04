@@ -97,15 +97,23 @@
 }
 
 /* ── TOUR TOGGLE ─────────────────────────────────────────────────── */
+/*
+ * All selectors below are deliberately scoped under .cga-tour-toggles
+ * (two-class or three-class chains) to beat Elementor and theme button
+ * resets without needing !important.
+ */
+
 .cga-tour-toggles {
 	display: flex;
 	flex-direction: column;
+	align-items: stretch;
 	gap: 8px;
 	width: 100%;
 	box-sizing: border-box;
 }
 
-.cga-toggle-item {
+.cga-tour-toggles .cga-toggle-item {
+	display: block;
 	width: 100%;
 	box-sizing: border-box;
 	border: 1px solid #dde3ec;
@@ -115,46 +123,55 @@
 	transition: border-color 0.3s cubic-bezier(0.25, 1, 0.35, 1);
 }
 
-.cga-toggle-item.is-open {
+.cga-tour-toggles .cga-toggle-item.is-open {
 	border-color: #2a4a80;
 }
 
-.cga-toggle-trigger {
+/* Three-class chain — beats any single/double class Elementor or theme rule */
+.cga-tour-toggles .cga-toggle-item .cga-toggle-trigger {
+	-webkit-appearance: none;
+	appearance: none;
 	display: flex;
 	align-items: center;
+	flex-wrap: nowrap;
 	gap: 16px;
 	width: 100%;
-	max-width: 100%;
 	box-sizing: border-box;
 	min-width: 0;
 	padding: 18px 22px;
+	margin: 0;
 	border: 0;
 	border-radius: 0;
 	outline: none;
+	box-shadow: none;
 	background: #ffffff;
 	text-align: left;
 	cursor: pointer;
 	transition: background-color 0.3s cubic-bezier(0.25, 1, 0.35, 1);
 }
 
-.cga-toggle-item.is-open .cga-toggle-trigger {
+.cga-tour-toggles .cga-toggle-item .cga-toggle-trigger:focus,
+.cga-tour-toggles .cga-toggle-item .cga-toggle-trigger:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+.cga-tour-toggles .cga-toggle-item.is-open .cga-toggle-trigger,
+.cga-tour-toggles .cga-toggle-item .cga-toggle-trigger:hover {
 	background: #e8f1f9;
 }
 
-.cga-toggle-trigger:hover {
-	background: #e8f1f9;
-}
-
-.cga-toggle-header-left {
+.cga-tour-toggles .cga-toggle-item .cga-toggle-trigger .cga-toggle-header-left {
 	display: flex;
 	align-items: center;
+	flex-wrap: nowrap;
 	gap: 14px;
-	min-width: 0;
 	flex: 1;
+	min-width: 0;
 }
 
-.cga-toggle-day {
-	flex-shrink: 0;
+.cga-tour-toggles .cga-toggle-item .cga-toggle-day {
+	flex: 0 0 44px;
 	width: 44px;
 	height: 44px;
 	border-radius: 3px;
@@ -164,10 +181,11 @@
 	align-items: center;
 	justify-content: center;
 	padding: 4px;
+	box-sizing: border-box;
 	transition: background-color 0.3s cubic-bezier(0.25, 1, 0.35, 1);
 }
 
-.cga-toggle-item.is-open .cga-toggle-day {
+.cga-tour-toggles .cga-toggle-item.is-open .cga-toggle-day {
 	background: #c4973a;
 }
 
@@ -188,8 +206,8 @@
 	color: rgba(255, 255, 255, 0.65);
 }
 
-/* Text container — fills remaining space, enables wrapping */
-.cga-toggle-title-wrap {
+/* Text wrap zone — flex: 1 + min-width: 0 allows proper shrink and line wrap */
+.cga-tour-toggles .cga-toggle-item .cga-toggle-trigger .cga-toggle-title-wrap {
 	flex: 1;
 	min-width: 0;
 	display: flex;
@@ -221,21 +239,23 @@
 	white-space: normal;
 }
 
-.cga-toggle-icon-wrap {
+.cga-tour-toggles .cga-toggle-item .cga-toggle-icon-wrap {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	flex: 0 0 28px;
 	width: 28px;
 	height: 28px;
-	flex-shrink: 0;
-	margin-left: auto;
 	border-radius: 50%;
 	border: 1.5px solid #dde3ec;
 	background: transparent;
 	color: #6b7a8d;
 	position: relative;
 	overflow: hidden;
-	transition: transform 0.3s cubic-bezier(0.25, 1, 0.35, 1), border-color 0.3s cubic-bezier(0.25, 1, 0.35, 1), background-color 0.3s cubic-bezier(0.25, 1, 0.35, 1), color 0.3s cubic-bezier(0.25, 1, 0.35, 1);
+	transition: transform 0.3s cubic-bezier(0.25, 1, 0.35, 1),
+	            border-color 0.3s cubic-bezier(0.25, 1, 0.35, 1),
+	            background-color 0.3s cubic-bezier(0.25, 1, 0.35, 1),
+	            color 0.3s cubic-bezier(0.25, 1, 0.35, 1);
 }
 
 .cga-toggle-icon-wrap i,
@@ -245,7 +265,7 @@
 	height: 12px;
 }
 
-.cga-toggle-item.is-open .cga-toggle-icon-wrap {
+.cga-tour-toggles .cga-toggle-item.is-open .cga-toggle-icon-wrap {
 	transform: rotate(180deg);
 	border-color: #1d3461;
 	background: #1d3461;
@@ -295,7 +315,7 @@
 }
 
 @media (max-width: 1024px) {
-	.cga-toggle-trigger {
+	.cga-tour-toggles .cga-toggle-item .cga-toggle-trigger {
 		padding: 16px 18px;
 	}
 
@@ -313,9 +333,8 @@
 }
 
 @media (max-width: 767px) {
-	.cga-toggle-header-left {
+	.cga-tour-toggles .cga-toggle-item .cga-toggle-trigger .cga-toggle-header-left {
 		gap: 10px;
-		align-items: center;
 	}
 
 	.cga-toggle-title {
@@ -326,7 +345,8 @@
 		font-size: 9px;
 	}
 
-	.cga-toggle-day {
+	.cga-tour-toggles .cga-toggle-item .cga-toggle-day {
+		flex: 0 0 36px;
 		width: 36px;
 		height: 36px;
 	}
@@ -339,7 +359,8 @@
 		font-size: 6px;
 	}
 
-	.cga-toggle-icon-wrap {
+	.cga-tour-toggles .cga-toggle-item .cga-toggle-icon-wrap {
+		flex: 0 0 24px;
 		width: 24px;
 		height: 24px;
 	}

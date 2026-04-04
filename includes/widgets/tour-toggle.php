@@ -427,25 +427,26 @@ class Elementor_Tour_Toggle extends \Elementor\Widget_Base {
 		$this->start_controls_section(
 			'section_style_day',
 			[
-				'label' => esc_html__( 'Day Label', 'elementor-concierge-addons' ),
+				'label' => esc_html__( 'Day Badge', 'elementor-concierge-addons' ),
 				'tab'   => \Elementor\Controls_Manager::TAB_STYLE,
 			]
 		);
 
-		$this->add_group_control(
-			\Elementor\Group_Control_Typography::get_type(),
+		$this->start_controls_tabs( 'day_badge_tabs' );
+
+		$this->start_controls_tab(
+			'day_badge_normal',
 			[
-				'name'     => 'day_typography',
-				'selector' => '{{WRAPPER}} .cga-toggle-day-label',
+				'label' => esc_html__( 'Normal', 'elementor-concierge-addons' ),
 			]
 		);
 
 		$this->add_control(
 			'day_color',
 			[
-				'label'     => esc_html__( 'Text Color', 'elementor-concierge-addons' ),
+				'label'     => esc_html__( 'Label Color', 'elementor-concierge-addons' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
-				'default'   => '#1d3461',
+				'default'   => 'rgba(255,255,255,0.65)',
 				'selectors' => [
 					'{{WRAPPER}} .cga-toggle-day-label' => 'color: {{VALUE}};',
 				],
@@ -455,7 +456,7 @@ class Elementor_Tour_Toggle extends \Elementor\Widget_Base {
 		$this->add_control(
 			'day_number_color',
 			[
-				'label'     => esc_html__( 'Day Number Color', 'elementor-concierge-addons' ),
+				'label'     => esc_html__( 'Number Color', 'elementor-concierge-addons' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
 				'default'   => '#ffffff',
 				'selectors' => [
@@ -469,10 +470,67 @@ class Elementor_Tour_Toggle extends \Elementor\Widget_Base {
 			[
 				'label'     => esc_html__( 'Background', 'elementor-concierge-addons' ),
 				'type'      => \Elementor\Controls_Manager::COLOR,
-				'default'   => '#e8f1f9',
+				'default'   => '#1d3461',
 				'selectors' => [
 					'{{WRAPPER}} .cga-toggle-day' => 'background-color: {{VALUE}};',
 				],
+			]
+		);
+
+		$this->end_controls_tab();
+
+		$this->start_controls_tab(
+			'day_badge_active',
+			[
+				'label' => esc_html__( 'Active', 'elementor-concierge-addons' ),
+			]
+		);
+
+		$this->add_control(
+			'day_bg_color_active',
+			[
+				'label'     => esc_html__( 'Background', 'elementor-concierge-addons' ),
+				'type'      => \Elementor\Controls_Manager::COLOR,
+				'default'   => '#c4973a',
+				'selectors' => [
+					'{{WRAPPER}} .cga-toggle-item.is-open .cga-toggle-day' => 'background-color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_control(
+			'day_number_color_active',
+			[
+				'label'     => esc_html__( 'Number Color', 'elementor-concierge-addons' ),
+				'type'      => \Elementor\Controls_Manager::COLOR,
+				'default'   => '#ffffff',
+				'selectors' => [
+					'{{WRAPPER}} .cga-toggle-item.is-open .cga-toggle-day-num' => 'color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_control(
+			'day_color_active',
+			[
+				'label'     => esc_html__( 'Label Color', 'elementor-concierge-addons' ),
+				'type'      => \Elementor\Controls_Manager::COLOR,
+				'default'   => 'rgba(255,255,255,0.65)',
+				'selectors' => [
+					'{{WRAPPER}} .cga-toggle-item.is-open .cga-toggle-day-label' => 'color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->end_controls_tab();
+		$this->end_controls_tabs();
+
+		$this->add_group_control(
+			\Elementor\Group_Control_Typography::get_type(),
+			[
+				'name'     => 'day_typography',
+				'label'    => esc_html__( 'Label Typography', 'elementor-concierge-addons' ),
+				'selector' => '{{WRAPPER}} .cga-toggle-day-label',
 			]
 		);
 
