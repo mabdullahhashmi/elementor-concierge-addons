@@ -65,6 +65,10 @@ class Elementor_Concierge_Addons {
 		// Register Tour Toggle widget
 		require_once ELEMENTOR_CONCIERGE_ADDONS_PATH . 'includes/widgets/tour-toggle.php';
 		$widgets_manager->register( new \Elementor_Tour_Toggle() );
+
+		// Register Course Carousel widget
+		require_once ELEMENTOR_CONCIERGE_ADDONS_PATH . 'includes/widgets/course-carousel.php';
+		$widgets_manager->register( new \Elementor_Course_Carousel() );
 	}
 
 	/**

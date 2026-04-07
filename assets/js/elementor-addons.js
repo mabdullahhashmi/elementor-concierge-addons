@@ -183,11 +183,192 @@
 		});
 	}
 
+	// ─── Course Carousel ──────────────────────────────────────────────
+
+	function initCourseCarousel($wrap) {
+		if ($wrap.data('cgc-bound')) return;
+		$wrap.data('cgc-bound', true);
+
+		var $viewport = $wrap.find('.cgc-viewport');
+		var $track    = $wrap.find('.cgc-track');
+		var $cards    = $track.find('.cgc-card');
+		var $prev     = $wrap.find('.cgc-arr-prev');
+		var $next     = $wrap.find('.cgc-arr-next');
+		var $fill     = $wrap.find('.cgc-progress-fill');
+		var $dotsWrap = $wrap.find('.cgc-dots');
+
+		var total    = $cards.length;
+		if (!total) return;
+
+		var speed     = parseInt($wrap.data('speed'), 10)    || 700;
+		var autoDelay = parseInt($wrap.data('autoplay'), 10) || 0;
+		var current   = 0;
+		var autoTimer = null;
+
+		// ─ Metrics ────────────────────────────────────────────────
+
+		function readGap() {
+			var g = parseFloat(window.getComputedStyle($track[0]).gap);
+			return isNaN(g) ? 0 : g;
+		}
+
+		function readSlides() {
+			var s = parseFloat(window.getComputedStyle($wrap[0]).getPropertyValue('--cgc-slides'));
+			return isNaN(s) || s <= 0 ? 2 : s;
+		}
+
+		function setCardWidths() {
+			var gap    = readGap();
+			var slides = readSlides();
+			var vw     = $viewport[0].getBoundingClientRect().width;
+			var cardW  = (vw - (slides - 1) * gap) / slides;
+			$cards.css('width', Math.max(0, cardW) + 'px');
+			return { gap: gap, cardW: cardW, step: cardW + gap };
+		}
+
+		function getMaxIndex(metrics) {
+			var vw      = $viewport[0].getBoundingClientRect().width;
+			var visible = metrics.step > 0 ? vw / metrics.step : 1;
+			return Math.max(0, total - Math.floor(visible));
+		}
+
+		// ─ Dots ───────────────────────────────────────────────────
+
+		function buildDots(max) {
+			$dotsWrap.empty();
+			for (var i = 0; i <= max; i++) {
+				var $dot = $('<button class="cgc-dot" aria-label="Slide ' + (i + 1) + '"></button>');
+				(function(idx) {
+					$dot.on('click', function() { goTo(idx); });
+				})(i);
+				$dotsWrap.append($dot);
+			}
+		}
+
+		// ─ UI ─────────────────────────────────────────────────────
+
+		function updateUI(max) {
+			$dotsWrap.find('.cgc-dot').each(function(i) {
+				$(this).toggleClass('is-active', i === current);
+			});
+			var pct = max > 0 ? (current / max) * 100 : 100;
+			$fill.css('width', pct + '%');
+			$prev.prop('disabled', current <= 0);
+			$next.prop('disabled', current >= max);
+		}
+
+		// ─ Navigation ─────────────────────────────────────────────
+
+		function goTo(index, animated) {
+			if (animated === undefined) animated = true;
+			var m   = setCardWidths();
+			var max = getMaxIndex(m);
+			current = Math.max(0, Math.min(index, max));
+
+			$track.css({
+				transition: animated ? ('transform ' + speed + 'ms cubic-bezier(0.25,1,0.35,1)') : 'none',
+				transform:  'translateX(-' + (current * m.step) + 'px)'
+			});
+			updateUI(max);
+		}
+
+		$prev.on('click', function() { goTo(current - 1); });
+		$next.on('click', function() { goTo(current + 1); });
+
+		// ─ Drag / Swipe ───────────────────────────────────────────
+
+		var dragStartX = null;
+		var dragging   = false;
+		var trackEl    = $track[0];
+
+		trackEl.addEventListener('pointerdown', function(e) {
+			dragStartX = e.clientX;
+			dragging   = false;
+			$track.css('transition', 'none');
+			if (trackEl.setPointerCapture) trackEl.setPointerCapture(e.pointerId);
+		});
+
+		trackEl.addEventListener('pointermove', function(e) {
+			if (dragStartX === null) return;
+			if (Math.abs(e.clientX - dragStartX) > 5) {
+				dragging = true;
+				$track.addClass('is-dragging');
+			}
+		});
+
+		trackEl.addEventListener('pointerup', function(e) {
+			if (dragStartX === null) return;
+			var diff = dragStartX - e.clientX;
+			if (Math.abs(diff) > 60) {
+				goTo(diff > 0 ? current + 1 : current - 1);
+			} else {
+				goTo(current);
+			}
+			$track.removeClass('is-dragging');
+			dragStartX = null;
+			setTimeout(function() { dragging = false; }, 0);
+		});
+
+		trackEl.addEventListener('pointercancel', function() {
+			$track.removeClass('is-dragging');
+			dragStartX = null;
+			dragging   = false;
+			goTo(current);
+		});
+
+		$track.on('click', function(e) {
+			if (dragging) e.preventDefault();
+		});
+
+		// ─ Autoplay ───────────────────────────────────────────────
+
+		function startAuto() {
+			if (!autoDelay) return;
+			autoTimer = setInterval(function() {
+				var m   = setCardWidths();
+				var max = getMaxIndex(m);
+				goTo(current >= max ? 0 : current + 1);
+			}, autoDelay);
+		}
+
+		function stopAuto() { clearInterval(autoTimer); autoTimer = null; }
+
+		$wrap.on('mouseenter', stopAuto).on('mouseleave', startAuto);
+
+		// ─ Resize ─────────────────────────────────────────────────
+
+		var resizeId;
+		window.addEventListener('resize', function() {
+			clearTimeout(resizeId);
+			resizeId = setTimeout(function() {
+				var m   = setCardWidths();
+				var max = getMaxIndex(m);
+				buildDots(max);
+				goTo(Math.min(current, max), false);
+			}, 250);
+		});
+
+		// ─ Init ───────────────────────────────────────────────────
+
+		var initM   = setCardWidths();
+		var initMax = getMaxIndex(initM);
+		buildDots(initMax);
+		goTo(0, false);
+		startAuto();
+	}
+
+	function initAllCarousels() {
+		$('.cgc-wrapper').each(function() {
+			initCourseCarousel($(this));
+		});
+	}
+
 	// ─── Boot ─────────────────────────────────────────────────────────
 
 	$(document).ready(function() {
 		initScrollSpy();
 		bindTourToggles($(document));
+		initAllCarousels();
 
 		// Hook Elementor widget-ready events (runs once per widget type, not globally)
 		function hookElementor() {
@@ -204,6 +385,12 @@
 				'frontend/element_ready/tour-toggle.default',
 				function($scope) { bindTourToggles($scope); }
 			);
+
+			// course-carousel.default fires when a carousel widget is ready
+			window.elementorFrontend.hooks.addAction(
+				'frontend/element_ready/course-carousel.default',
+				function() { initAllCarousels(); }
+			);
 		}
 
 		if (window.elementorFrontend) {
@@ -215,6 +402,7 @@
 		$(document).on('elementor/popup/show', function() {
 			initScrollSpy();
 			bindTourToggles($(document));
+			initAllCarousels();
 		});
 	});
 

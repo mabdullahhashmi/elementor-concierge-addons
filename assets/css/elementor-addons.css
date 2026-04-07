@@ -376,3 +376,240 @@
 		padding: 0 14px 14px 58px;
 	}
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   COURSE CAROUSEL
+══════════════════════════════════════════════════════════════════ */
+.cgc-wrapper {
+	--cgc-slides: 2;
+	--cgc-gap:    20px;
+	--cgc-ov-b:   rgba(10,18,40,0.95);
+	--cgc-ov-m:   rgba(10,18,40,0.40);
+	--cgc-ov-t:   rgba(10,18,40,0);
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.cgc-viewport {
+	overflow: hidden;
+	width: 100%;
+}
+
+.cgc-track {
+	display: flex;
+	gap: var(--cgc-gap, 20px);
+	transition: transform 0.7s cubic-bezier(0.25, 1, 0.35, 1);
+	will-change: transform;
+	cursor: grab;
+	user-select: none;
+	-webkit-user-select: none;
+}
+
+.cgc-track.is-dragging {
+	cursor: grabbing;
+	transition: none;
+}
+
+/* Card — width is set by JS from --cgc-slides and --cgc-gap */
+.cgc-card {
+	flex: 0 0 auto;
+	min-width: 0;
+	position: relative;
+	overflow: hidden;
+	border-radius: 4px;
+	background: #0a1228;
+}
+
+.cgc-card-img {
+	width: 100%;
+	padding-top: 70%;
+	position: relative;
+	overflow: hidden;
+}
+
+.cgc-card-img img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: center 38%;
+	transform: scale(1.04);
+	transition: transform 6s cubic-bezier(0.25, 1, 0.35, 1);
+	display: block;
+}
+
+.cgc-card:hover .cgc-card-img img {
+	transform: scale(1.1);
+}
+
+.cgc-card-overlay {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		to top,
+		var(--cgc-ov-b, rgba(10,18,40,0.95)) 0%,
+		var(--cgc-ov-m, rgba(10,18,40,0.40)) 45%,
+		var(--cgc-ov-t, rgba(10,18,40,0)) 75%
+	);
+	pointer-events: none;
+}
+
+.cgc-card-body {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	padding: 24px 22px 20px;
+}
+
+.cgc-card-tag {
+	display: inline-block;
+	font-size: 8px;
+	font-weight: 700;
+	letter-spacing: 0.25em;
+	text-transform: uppercase;
+	color: #d4a847;
+	background: rgba(196, 151, 58, 0.15);
+	border: 1px solid rgba(196, 151, 58, 0.30);
+	padding: 3px 9px;
+	border-radius: 1px;
+	margin-bottom: 10px;
+}
+
+.cgc-card-title {
+	font-family: 'Cormorant Garamond', serif;
+	font-size: 22px;
+	font-weight: 400;
+	line-height: 1.15;
+	color: #ffffff;
+	margin: 0;
+}
+
+.cgc-card-title em {
+	font-style: italic;
+	color: #d4a847;
+}
+
+/* ── Footer ───────────────────────────────────────────────────── */
+.cgc-footer {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	margin-top: 20px;
+}
+
+.cgc-arrows {
+	display: flex;
+	gap: 8px;
+}
+
+.cgc-arr-btn {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 40px;
+	height: 40px;
+	flex-shrink: 0;
+	border: 1.5px solid #dde3ec;
+	border-radius: 3px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: transparent;
+	cursor: pointer;
+	padding: 0;
+	outline: none;
+	box-shadow: none;
+	transition: border-color 0.3s cubic-bezier(0.25, 1, 0.35, 1),
+	            background-color 0.3s cubic-bezier(0.25, 1, 0.35, 1);
+}
+
+.cgc-arr-btn:focus,
+.cgc-arr-btn:focus-visible {
+	outline: none;
+	box-shadow: none;
+}
+
+.cgc-arr-btn svg {
+	flex-shrink: 0;
+	stroke: #1d3461;
+	transition: stroke 0.3s cubic-bezier(0.25, 1, 0.35, 1);
+}
+
+.cgc-arr-btn:hover {
+	border-color: #1d3461;
+	background-color: #1d3461;
+}
+
+.cgc-arr-btn:hover svg {
+	stroke: #ffffff;
+}
+
+.cgc-arr-btn:disabled,
+.cgc-arr-btn[disabled] {
+	opacity: 0.35;
+	cursor: default;
+}
+
+.cgc-progress-track {
+	flex: 1;
+	height: 2px;
+	background: #dde3ec;
+	border-radius: 2px;
+	overflow: hidden;
+}
+
+.cgc-progress-fill {
+	height: 100%;
+	background: #1d3461;
+	border-radius: 2px;
+	width: 0%;
+	transition: width 0.4s cubic-bezier(0.25, 1, 0.35, 1);
+}
+
+.cgc-dots {
+	display: flex;
+	gap: 6px;
+	align-items: center;
+}
+
+.cgc-dot {
+	-webkit-appearance: none;
+	appearance: none;
+	flex-shrink: 0;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: #dde3ec;
+	border: none;
+	cursor: pointer;
+	padding: 0;
+	outline: none;
+	transition: background-color 0.3s, width 0.3s, border-radius 0.3s;
+}
+
+.cgc-dot.is-active {
+	background: #1d3461;
+	width: 20px;
+	border-radius: 3px;
+}
+
+@media (max-width: 767px) {
+	.cgc-footer {
+		gap: 12px;
+		margin-top: 16px;
+	}
+
+	.cgc-arr-btn {
+		width: 36px;
+		height: 36px;
+	}
+
+	.cgc-card-title {
+		font-size: 18px;
+	}
+
+	.cgc-card-body {
+		padding: 16px 16px 14px;
+	}
+}
