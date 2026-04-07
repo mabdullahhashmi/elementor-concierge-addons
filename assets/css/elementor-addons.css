@@ -403,6 +403,7 @@
 	cursor: grab;
 	user-select: none;
 	-webkit-user-select: none;
+	touch-action: pan-y;
 }
 
 .cgc-track.is-dragging {
@@ -410,9 +411,13 @@
 	transition: none;
 }
 
-/* Card — width is set by JS from --cgc-slides and --cgc-gap */
+/* Card — sized purely by CSS custom-properties; JS only enhances */
 .cgc-card {
-	flex: 0 0 auto;
+	flex: 0 0 calc(50% - 10px);                            /* safe fallback: 2 slides, 20px gap */
+	flex: 0 0 calc(
+		(100% - (var(--cgc-slides, 2) - 1) * var(--cgc-gap, 20px))
+		/ var(--cgc-slides, 2)
+	);
 	min-width: 0;
 	position: relative;
 	overflow: hidden;
@@ -446,6 +451,8 @@
 .cgc-card-overlay {
 	position: absolute;
 	inset: 0;
+	z-index: 1;
+	background: linear-gradient(to top, rgba(10,18,40,0.95) 0%, rgba(10,18,40,0.4) 45%, transparent 75%);
 	background: linear-gradient(
 		to top,
 		var(--cgc-ov-b, rgba(10,18,40,0.95)) 0%,
@@ -460,6 +467,7 @@
 	bottom: 0;
 	left: 0;
 	right: 0;
+	z-index: 2;
 	padding: 24px 22px 20px;
 }
 

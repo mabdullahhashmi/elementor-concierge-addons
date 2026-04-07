@@ -208,7 +208,11 @@
 		// ─ Metrics ────────────────────────────────────────────────
 
 		function readGap() {
-			var g = parseFloat(window.getComputedStyle($track[0]).gap);
+			var cs = window.getComputedStyle($track[0]);
+			// Try gap first, then column-gap, then parse from style attribute
+			var g = parseFloat(cs.getPropertyValue('gap'))
+			     || parseFloat(cs.getPropertyValue('column-gap'))
+			     || 0;
 			return isNaN(g) ? 0 : g;
 		}
 
@@ -217,19 +221,19 @@
 			return isNaN(s) || s <= 0 ? 2 : s;
 		}
 
-		function setCardWidths() {
-			var gap    = readGap();
-			var slides = readSlides();
-			var vw     = $viewport[0].getBoundingClientRect().width;
-			var cardW  = (vw - (slides - 1) * gap) / slides;
-			$cards.css('width', Math.max(0, cardW) + 'px');
-			return { gap: gap, cardW: cardW, step: cardW + gap };
+		function measure() {
+			// Card width from first card's actual rendered width (CSS calc sets it)
+			var gap   = readGap();
+			var cardW = $cards.first()[0].getBoundingClientRect().width;
+			var step  = cardW + gap;
+			return { gap: gap, cardW: cardW, step: step };
 		}
 
 		function getMaxIndex(metrics) {
-			var vw      = $viewport[0].getBoundingClientRect().width;
-			var visible = metrics.step > 0 ? vw / metrics.step : 1;
-			return Math.max(0, total - Math.floor(visible));
+			var vw = $viewport[0].getBoundingClientRect().width;
+			if (metrics.step <= 0) return 0;
+			var visible = Math.floor(vw / metrics.step);
+			return Math.max(0, total - Math.max(1, visible));
 		}
 
 		// ─ Dots ───────────────────────────────────────────────────
@@ -261,7 +265,7 @@
 
 		function goTo(index, animated) {
 			if (animated === undefined) animated = true;
-			var m   = setCardWidths();
+			var m   = measure();
 			var max = getMaxIndex(m);
 			current = Math.max(0, Math.min(index, max));
 
@@ -325,7 +329,7 @@
 		function startAuto() {
 			if (!autoDelay) return;
 			autoTimer = setInterval(function() {
-				var m   = setCardWidths();
+				var m   = measure();
 				var max = getMaxIndex(m);
 				goTo(current >= max ? 0 : current + 1);
 			}, autoDelay);
@@ -341,7 +345,7 @@
 		window.addEventListener('resize', function() {
 			clearTimeout(resizeId);
 			resizeId = setTimeout(function() {
-				var m   = setCardWidths();
+				var m   = measure();
 				var max = getMaxIndex(m);
 				buildDots(max);
 				goTo(Math.min(current, max), false);
@@ -350,7 +354,7 @@
 
 		// ─ Init ───────────────────────────────────────────────────
 
-		var initM   = setCardWidths();
+		var initM   = measure();
 		var initMax = getMaxIndex(initM);
 		buildDots(initMax);
 		goTo(0, false);
