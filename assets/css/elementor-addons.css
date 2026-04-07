@@ -411,13 +411,9 @@
 	transition: none;
 }
 
-/* Card — sized purely by CSS custom-properties; JS only enhances */
+/* Card — JS sets explicit width; fallback for no-JS */
 .cgc-card {
-	flex: 0 0 calc(50% - 10px);                            /* safe fallback: 2 slides, 20px gap */
-	flex: 0 0 calc(
-		(100% - (var(--cgc-slides, 2) - 1) * var(--cgc-gap, 20px))
-		/ var(--cgc-slides, 2)
-	);
+	flex: 0 0 calc(50% - 10px);
 	min-width: 0;
 	position: relative;
 	overflow: hidden;

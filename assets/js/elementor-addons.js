@@ -191,28 +191,28 @@
 
 		var $viewport = $wrap.find('.cgc-viewport');
 		var $track    = $wrap.find('.cgc-track');
-		var $cards    = $track.find('.cgc-card');
+		var $realCards = $track.find('.cgc-card');
 		var $prev     = $wrap.find('.cgc-arr-prev');
 		var $next     = $wrap.find('.cgc-arr-next');
 		var $fill     = $wrap.find('.cgc-progress-fill');
 		var $dotsWrap = $wrap.find('.cgc-dots');
 
-		var total    = $cards.length;
+		var total = $realCards.length;
 		if (!total) return;
 
 		var speed     = parseInt($wrap.data('speed'), 10)    || 700;
 		var autoDelay = parseInt($wrap.data('autoplay'), 10) || 0;
-		var current   = 0;
+		var current   = 0;          // 0-based real card index
 		var autoTimer = null;
+		var busy      = false;      // blocks clicks during transition
 
 		// ─ Metrics ────────────────────────────────────────────────
 
 		function readGap() {
 			var cs = window.getComputedStyle($track[0]);
-			// Try gap first, then column-gap, then parse from style attribute
-			var g = parseFloat(cs.getPropertyValue('gap'))
-			     || parseFloat(cs.getPropertyValue('column-gap'))
-			     || 0;
+			var g  = parseFloat(cs.getPropertyValue('gap'))
+			      || parseFloat(cs.getPropertyValue('column-gap'))
+			      || 0;
 			return isNaN(g) ? 0 : g;
 		}
 
@@ -221,62 +221,101 @@
 			return isNaN(s) || s <= 0 ? 2 : s;
 		}
 
-		function measure() {
-			// Card width from first card's actual rendered width (CSS calc sets it)
-			var gap   = readGap();
-			var cardW = $cards.first()[0].getBoundingClientRect().width;
-			var step  = cardW + gap;
-			return { gap: gap, cardW: cardW, step: step };
+		// ─ Clone cards for infinite loop ──────────────────────────
+
+		var cloneCount = Math.ceil(readSlides());
+		if (cloneCount > total) cloneCount = total;
+
+		// Append clones of the first N cards at the end
+		for (var i = 0; i < cloneCount; i++) {
+			$track.append($realCards.eq(i).clone().addClass('cgc-clone'));
+		}
+		// Prepend clones of the last N cards at the start
+		for (var i = total - 1; i >= total - cloneCount; i--) {
+			$track.prepend($realCards.eq(i).clone().addClass('cgc-clone'));
 		}
 
-		function getMaxIndex(metrics) {
-			var vw = $viewport[0].getBoundingClientRect().width;
-			if (metrics.step <= 0) return 0;
-			var visible = Math.floor(vw / metrics.step);
-			return Math.max(0, total - Math.max(1, visible));
+		var $allCards = $track.find('.cgc-card');  // real + clones
+
+		// ─ Sizing ─────────────────────────────────────────────────
+
+		function sizeCards() {
+			var gap    = readGap();
+			var slides = readSlides();
+			var vw     = $viewport[0].getBoundingClientRect().width;
+			var cardW  = (vw - (slides - 1) * gap) / slides;
+			$allCards.css('width', Math.max(0, cardW) + 'px');
+			return { gap: gap, cardW: cardW, step: cardW + gap };
+		}
+
+		// ─ Translate helper ───────────────────────────────────────
+		// DOM position 0 = first prepended clone.
+		// Real card 0 sits at DOM position `cloneCount`.
+
+		function translateToDom(domIdx, animated) {
+			var m  = sizeCards();
+			var px = domIdx * m.step;
+			$track.css({
+				transition: animated
+					? 'transform ' + speed + 'ms cubic-bezier(0.25,1,0.35,1)'
+					: 'none',
+				transform: 'translateX(-' + px + 'px)'
+			});
+			return m;
 		}
 
 		// ─ Dots ───────────────────────────────────────────────────
 
-		function buildDots(max) {
+		function buildDots() {
 			$dotsWrap.empty();
-			for (var i = 0; i <= max; i++) {
-				var $dot = $('<button class="cgc-dot" aria-label="Slide ' + (i + 1) + '"></button>');
-				(function(idx) {
-					$dot.on('click', function() { goTo(idx); });
-				})(i);
-				$dotsWrap.append($dot);
+			for (var i = 0; i < total; i++) {
+				var $d = $('<button class="cgc-dot" aria-label="Slide ' + (i + 1) + '"></button>');
+				(function(idx) { $d.on('click', function() { goTo(idx); }); })(i);
+				$dotsWrap.append($d);
 			}
 		}
 
 		// ─ UI ─────────────────────────────────────────────────────
 
-		function updateUI(max) {
+		function updateUI() {
+			var ri = ((current % total) + total) % total;
 			$dotsWrap.find('.cgc-dot').each(function(i) {
-				$(this).toggleClass('is-active', i === current);
+				$(this).toggleClass('is-active', i === ri);
 			});
-			var pct = max > 0 ? (current / max) * 100 : 100;
+			var pct = total > 1 ? (ri / (total - 1)) * 100 : 100;
 			$fill.css('width', pct + '%');
-			// Never disable — carousel loops
 		}
 
 		// ─ Navigation ─────────────────────────────────────────────
 
 		function goTo(index, animated) {
+			if (busy && animated !== false) return;
 			if (animated === undefined) animated = true;
-			var m   = measure();
-			var max = getMaxIndex(m);
-			// Loop: wrap around
-			if (index > max) index = 0;
-			if (index < 0)   index = max;
-			current = index;
 
-			$track.css({
-				transition: animated ? ('transform ' + speed + 'ms cubic-bezier(0.25,1,0.35,1)') : 'none',
-				transform:  'translateX(-' + (current * m.step) + 'px)'
-			});
-			updateUI(max);
+			current = index;
+			var domIdx = cloneCount + current;
+			if (animated) busy = true;
+			translateToDom(domIdx, animated);
+			updateUI();
 		}
+
+		// After transition ends: if we scrolled into clone territory, snap
+		$track[0].addEventListener('transitionend', function(e) {
+			if (e.target !== $track[0]) return;
+			busy = false;
+
+			if (current >= total) {
+				// Scrolled past last real card into appended clones → snap to start
+				current = current - total;
+				translateToDom(cloneCount + current, false);
+				updateUI();
+			} else if (current < 0) {
+				// Scrolled before first real card into prepended clones → snap to end
+				current = total + current;
+				translateToDom(cloneCount + current, false);
+				updateUI();
+			}
+		});
 
 		$prev.on('click', function() { goTo(current - 1); });
 		$next.on('click', function() { goTo(current + 1); });
@@ -288,6 +327,7 @@
 		var trackEl    = $track[0];
 
 		trackEl.addEventListener('pointerdown', function(e) {
+			if (busy) return;
 			dragStartX = e.clientX;
 			dragging   = false;
 			$track.css('transition', 'none');
@@ -331,9 +371,7 @@
 		function startAuto() {
 			if (!autoDelay) return;
 			autoTimer = setInterval(function() {
-				var m   = measure();
-				var max = getMaxIndex(m);
-				goTo(current >= max ? 0 : current + 1);
+				goTo(current + 1);
 			}, autoDelay);
 		}
 
@@ -347,18 +385,13 @@
 		window.addEventListener('resize', function() {
 			clearTimeout(resizeId);
 			resizeId = setTimeout(function() {
-				var m   = measure();
-				var max = getMaxIndex(m);
-				buildDots(max);
-				goTo(Math.min(current, max), false);
+				goTo(current, false);
 			}, 250);
 		});
 
 		// ─ Init ───────────────────────────────────────────────────
 
-		var initM   = measure();
-		var initMax = getMaxIndex(initM);
-		buildDots(initMax);
+		buildDots();
 		goTo(0, false);
 		startAuto();
 	}
