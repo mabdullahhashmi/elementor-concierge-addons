@@ -257,8 +257,7 @@
 			});
 			var pct = max > 0 ? (current / max) * 100 : 100;
 			$fill.css('width', pct + '%');
-			$prev.prop('disabled', current <= 0);
-			$next.prop('disabled', current >= max);
+			// Never disable — carousel loops
 		}
 
 		// ─ Navigation ─────────────────────────────────────────────
@@ -267,7 +266,10 @@
 			if (animated === undefined) animated = true;
 			var m   = measure();
 			var max = getMaxIndex(m);
-			current = Math.max(0, Math.min(index, max));
+			// Loop: wrap around
+			if (index > max) index = 0;
+			if (index < 0)   index = max;
+			current = index;
 
 			$track.css({
 				transition: animated ? ('transform ' + speed + 'ms cubic-bezier(0.25,1,0.35,1)') : 'none',
